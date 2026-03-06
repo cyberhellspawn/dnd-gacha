@@ -6,24 +6,50 @@
 
 <style>
 body{font-family:Arial;text-align:center;background:#336b8a}
+
 #login{margin-top:40px}
-#perfil img{width:150px;border-radius:50%;border:3px solid white;}
+
+#perfil img{
+width:150px;
+border-radius:50%;
+border:3px solid white;
+}
 
 #game{display:none}
-#cofre{width:200px;cursor:pointer;transition:transform 0.4s}
-.abriendo{transform:scale(1.2) rotate(5deg)}
-.catalogo{margin-top:30px;display:flex;justify-content:center;gap:40px}
-.item{text-align:center}
-.item img{width:80px}
 
-table{margin:auto;margin-top:20px;border-collapse:collapse;width:80%}
+#cofre{
+width:200px;
+cursor:pointer;
+transition:transform 0.4s
+}
 
-td,th{border:1px solid #999;padding:8px 14px}
+.abriendo{
+transform:scale(1.2) rotate(5deg)
+}
 
-.particula{position:absolute;font-size:24px;animation:subir 1s ease-out forwards}
+table{
+margin:auto;
+margin-top:20px;
+border-collapse:collapse;
+width:80%;
+background:white
+}
 
-@keyframes subir{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-100px)}}
+td,th{
+border:1px solid #999;
+padding:8px 14px
+}
 
+.particula{
+position:absolute;
+font-size:24px;
+animation:subir 1s ease-out forwards
+}
+
+@keyframes subir{
+0%{opacity:1;transform:translateY(0)}
+100%{opacity:0;transform:translateY(-100px)}
+}
 </style>
 </head>
 
@@ -32,37 +58,28 @@ td,th{border:1px solid #999;padding:8px 14px}
 <h1>Gaoth Gacha</h1>
 
 <h3>Probabilidades</h3>
-<p>Epico 2% &nbsp;&nbsp; Raro 18% &nbsp;&nbsp; Comun 80%</p>
+<p>Epico 2% | Raro 18% | Comun 80%</p>
 
 <div id="login">
-  
-<select id="nombre">
 
+<select id="nombre">
 <option value="">Selecciona jugador</option>
 <option value="Mal">Mal</option>
 <option value="Lio">Lio</option>
 <option value="PERGO">PERGO</option>
 <option value="Haz">DM Haz</option>
-
 </select>
 
 <button onclick="login()">Entrar</button>
 
 </div>
 
-<!-- PERFIL -->
-
 <div id="perfil" style="display:none">
-
 <img id="fotoJugador">
-<div id="player"></div>
-
+<h3 id="player"></h3>
 </div>
 
-
 <div id="game">
-
-<h3 id="player"></h3>
 
 <button onclick="cambiarCofre('normal')">Cofre Normal</button>
 <button onclick="cambiarCofre('valentine')">Cofre Valentine</button>
@@ -89,31 +106,29 @@ td,th{border:1px solid #999;padding:8px 14px}
 <hr>
 
 <h2>Catalogo</h2>
-  
+
 <table id="catalogoTabla">
+
 <tr>
 <th>Rareza</th>
 <th>Objeto</th>
 <th>Descripcion</th>
 </tr>
-</table>
-
-<hr>
 
 <tr>
-<td><img src="img/candy.png" width="50"></td>
+<td><img src="img/candy.png" width="40"> Comun</td>
 <td>Caramelo</td>
 <td>Dulce común encontrado en cofres</td>
 </tr>
 
 <tr>
-<td><img src="img/hat.png" width="50"></td>
+<td><img src="img/hat.png" width="40"> Raro</td>
 <td>Sombrero</td>
 <td>Objeto raro de colección</td>
 </tr>
 
 <tr>
-<td><img src="img/explosion.png" width="50"></td>
+<td><img src="img/explosion.png" width="40"> Epico</td>
 <td>Explosión</td>
 <td>Poder épico devastador</td>
 </tr>
@@ -142,21 +157,18 @@ td,th{border:1px solid #999;padding:8px 14px}
 
 let jugador=""
 let pity=0
+let tipoCofre="normal"
+
+let objetos={normal:[],valentine:[]}
+
+let inventario={}
 
 const jugadoresImg={
-
 Mal:"img/Mal.png",
 Lio:"img/Lio.png",
 PERGO:"img/PERGO.png",
 Haz:"img/Haz.png"
-
 }
-  
-let jugador=""
-let tipoCofre="normal"
-let pity=0
-
-let objetos={normal:[],valentine:[]}
 
 const cofres={
 normal:{
@@ -180,8 +192,6 @@ fondo:"#ffe6f0"
 }
 }
 
-let inventario={}
-
 async function cargarCSV(){
 
 let normal=await fetch("list/common.csv").then(r=>r.text())
@@ -199,7 +209,11 @@ lineas.shift()
 
 return lineas.map(l=>{
 let p=l.split(",")
-return{rareza:p[0].toLowerCase(),nombre:p[1],descripcion:p[2]}
+return{
+rareza:p[0].toLowerCase(),
+nombre:p[1],
+descripcion:p[2]
+}
 })
 
 }
@@ -210,10 +224,11 @@ let nombre=document.getElementById("nombre").value
 if(nombre=="")return
 
 jugador=nombre
-localStorage.setItem("jugador",nombre)
 
 document.getElementById("player").innerText="Jugador: "+jugador
+document.getElementById("fotoJugador").src=jugadoresImg[jugador]
 
+document.getElementById("perfil").style.display="block"
 document.getElementById("login").style.display="none"
 document.getElementById("game").style.display="block"
 
@@ -229,15 +244,22 @@ document.getElementById("cofre").src=cofres[tipo].imagen
 
 document.body.style.background=cofres[tipo].fondo
 
-generarCatalogo()
-
 }
 
 function tirar(num){
 
+if(objetos[tipoCofre].length==0){
+alert("Los objetos aún no cargan")
+return
+}
+
 let tabla=document.getElementById("resultadoTabla")
 
-tabla.innerHTML=`<tr><th>Rareza</th><th>Objeto</th><th>Descripcion</th></tr>`
+tabla.innerHTML=`<tr>
+<th>Rareza</th>
+<th>Objeto</th>
+<th>Descripcion</th>
+</tr>`
 
 for(let i=0;i<num;i++){
 
@@ -326,43 +348,11 @@ p.innerHTML=simbolo
 p.style.left=(window.innerWidth/2+Math.random()*100-50)+"px"
 p.style.top="200px"
 
-
 document.body.appendChild(p)
 
 setTimeout(()=>p.remove(),1000)
 
 }
-
-}
-
-function generarCatalogo(){
-
-let c=document.getElementById("catalogo")
-
-c.innerHTML=`
-
-<img src="${cofres[tipoCofre].imagen}" width="120">
-
-<div class="catalogo">
-
-<div class="item">
-<img src="${cofres[tipoCofre].comun}">
-<p>Comun</p>
-</div>
-
-<div class="item">
-<img src="${cofres[tipoCofre].raro}">
-<p>Raro</p>
-</div>
-
-<div class="item">
-<img src="${cofres[tipoCofre].epico}">
-<p>Epico</p>
-</div>
-
-</div>
-
-`
 
 }
 
@@ -382,7 +372,7 @@ function actualizarTabla(){
 
 let tabla=document.getElementById("inventarioTabla")
 
-tabla.innerHTML="<tr><th>Item</th><th>Cantidad</th></tr>"
+tabla.innerHTML="<tr><th>Objeto</th><th>Cantidad</th></tr>"
 
 for(let item in inventario){
 
@@ -419,4 +409,3 @@ cargarCSV()
 
 </body>
 </html>
-
