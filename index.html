@@ -5,7 +5,12 @@
 <title>Official Gaoth Gacha</title>
 
 <style>
-body{font-family:Arial;text-align:center;background:#336b8a}
+
+body{
+font-family:Arial;
+text-align:center;
+background:#336b8a;
+}
 
 #login{margin-top:40px}
 
@@ -16,6 +21,8 @@ border:3px solid white;
 }
 
 #game{display:none}
+
+#dmPanel{display:none}
 
 #cofre{
 width:200px;
@@ -50,6 +57,7 @@ animation:subir 1s ease-out forwards
 0%{opacity:1;transform:translateY(0)}
 100%{opacity:0;transform:translateY(-100px)}
 }
+
 </style>
 </head>
 
@@ -107,7 +115,7 @@ animation:subir 1s ease-out forwards
 
 <h2>Catalogo</h2>
 
-<table id="catalogoTabla">
+<table>
 
 <tr>
 <th>Rareza</th>
@@ -148,7 +156,6 @@ animation:subir 1s ease-out forwards
 
 </div>
 
-<!-- PANEL DM -->
 <div id="dmPanel">
 
 <h2>Panel del Dungeon Master</h2>
@@ -177,7 +184,6 @@ let pity=0
 let tipoCofre="normal"
 
 let objetos={normal:[],valentine:[]}
-
 let inventario={}
 
 const jugadoresImg={
@@ -186,6 +192,28 @@ Lio:"img/Lio.png",
 PERGO:"img/PERGO.png",
 Haz:"img/Haz.png"
 }
+
+const cofres={
+normal:{
+imagen:"img/chest.png",
+comun:"img/candy.png",
+raro:"img/hat.png",
+epico:"img/explosion.png",
+sonido:"open",
+sonidoEpico:"epic",
+fondo:"#f5e6c8"
+},
+valentine:{
+imagen:"img/heartbox.png",
+comun:"img/hand.png",
+raro:"img/star.png",
+epico:"img/heart.png",
+sonido:"paper",
+sonidoEpico:"kiss",
+fondo:"#ffe6f0"
+}
+}
+
 function login(){
 
 let nombre=document.getElementById("nombre").value
@@ -210,7 +238,9 @@ document.getElementById("game").style.display="block"
 cargarInventario()
 
 }
+
 }
+
 function cargarInventariosDM(){
 
 let tabla=document.getElementById("dmTabla")
@@ -242,71 +272,6 @@ tabla.appendChild(fila)
 })
 
 }
-actualizarTabla()
-
-}
-
-function actualizarTabla(){
-
-let tabla=document.getElementById("inventarioTabla")
-
-tabla.innerHTML="<tr><th>Objeto</th><th>Cantidad</th></tr>"
-
-for(let item in inventario){
-
-let fila=document.createElement("tr")
-
-fila.innerHTML="<td>"+item+"</td><td>"+inventario[item]+"</td>"
-
-tabla.appendChild(fila)
-
-}
-
-}
-
-function guardarInventario(){
-localStorage.setItem("inventario_"+jugador,JSON.stringify(inventario))
-}
-
-function cargarInventario(){
-
-let data=localStorage.getItem("inventario_"+jugador)
-
-if(data){
-inventario=JSON.parse(data)
-actualizarTabla()
-}
-
-}
-
-function agregarInventario(nombre){
-
-if(!inventario[nombre]){
-inventario[nombre]=0
-}
-
-inventario[nombre]++
-const cofres={
-normal:{
-imagen:"img/chest.png",
-comun:"img/candy.png",
-raro:"img/hat.png",
-epico:"img/explosion.png",
-sonido:"open",
-sonidoEpico:"epic",
-fondo:"#f5e6c8"
-},
-
-valentine:{
-imagen:"img/heartbox.png",
-comun:"img/hand.png",
-raro:"img/star.png",
-epico:"img/heart.png",
-sonido:"paper",
-sonidoEpico:"kiss",
-fondo:"#ffe6f0"
-}
-}
 
 async function cargarCSV(){
 
@@ -334,30 +299,11 @@ descripcion:p[2]
 
 }
 
-function login(){
-
-let nombre=document.getElementById("nombre").value
-if(nombre=="")return
-
-jugador=nombre
-
-document.getElementById("player").innerText="Jugador: "+jugador
-document.getElementById("fotoJugador").src=jugadoresImg[jugador]
-
-document.getElementById("perfil").style.display="block"
-document.getElementById("login").style.display="none"
-document.getElementById("game").style.display="block"
-
-cargarInventario()
-
-}
-
 function cambiarCofre(tipo){
 
 tipoCofre=tipo
 
 document.getElementById("cofre").src=cofres[tipo].imagen
-
 document.body.style.background=cofres[tipo].fondo
 
 }
@@ -525,4 +471,3 @@ cargarCSV()
 
 </body>
 </html>
-
