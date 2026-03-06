@@ -1,101 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 <meta charset="UTF-8">
-<title>Official Gaoth Gacha</title>
+<title>Gaoth Gacha</title>
 
 <style>
 
 body{
 font-family:Arial;
 text-align:center;
-background:#1e1e2f;
-transition:0.5s;
+background:#222;
+color:white;
 }
-
-/* LOGIN */
-
-#login{
-margin-top:40px;
-}
-
-/* JUEGO */
 
 #game{
 display:none;
-margin-top:30px;
 }
 
-/* COFRES */
-
-.cofre{
-width:180px;
+.chest{
+width:120px;
 cursor:pointer;
+margin:10px;
 transition:0.3s;
 }
 
-.cofre:hover{
+.chest:hover{
 transform:scale(1.1);
 }
 
-.abriendo{
-transform:scale(1.2) rotate(6deg);
-}
-
-/* RESULTADO */
-
-#resultado img{
-width:70px;
-margin:5px;
-}
-
-/* INVENTARIO */
-
-table{
-margin:auto;
+.result{
 margin-top:20px;
-border-collapse:collapse;
-}
-
-td,th{
-border:1px solid #aaa;
-padding:8px 14px;
-}
-
-/* PARTICULAS */
-
-.particula{
-position:absolute;
-font-size:26px;
-animation:subir 1s ease-out forwards;
-pointer-events:none;
-}
-
-@keyframes subir{
-
-0%{
-opacity:1;
-transform:translateY(0) scale(1);
-}
-
-100%{
-opacity:0;
-transform:translateY(-120px) scale(1.5);
-}
-
+font-size:20px;
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>Official Gaoth Gacha</h1>
+<h1>Gaoth Gacha</h1>
 
 <h3>Probabilidades</h3>
-
-<p>Epico 2% | Raro 18% | Comun 80%</p>
+<p>Épico 2% | Raro 18% | Común 80%</p>
 
 <div id="login">
 
@@ -104,293 +50,129 @@ transform:translateY(-120px) scale(1.5);
 
 </div>
 
+
 <div id="game">
 
-<h2>Selecciona Cofre</h2>
+<h2 id="player"></h2>
 
-<img src="img/chest.png" class="cofre" onclick="abrirComun()">
-<img src="img/heartbox.png" class="cofre" onclick="abrirValentine()">
+<h3>Selecciona un cofre</h3>
 
-<h2>Resultado</h2>
+<img src="img/chest.png" class="chest" onclick="abrirCofre('common')">
+<img src="img/heartbox.png" class="chest" onclick="abrirCofre('valentine')">
 
-<div id="resultado"></div>
-
-<h2>Inventario</h2>
-
-<table id="inventarioTabla">
-<tr>
-<th>Objeto</th>
-<th>Cantidad</th>
-</tr>
-</table>
+<div class="result" id="resultado"></div>
 
 </div>
-
-<!-- SONIDOS -->
-
-<audio id="open" src="sound/open.mp3"></audio>
-<audio id="epic" src="sound/epic.mp3"></audio>
-
-<audio id="paper" src="sound/paper.mp3"></audio>
-<audio id="kiss" src="sound/kiss.mp3"></audio>
 
 <script>
 
 let jugador=""
 
-let inventario={}
+let items={
+comun:[],
+raro:[],
+epico:[]
+}
 
-let listaComun=[]
-let listaValentine=[]
-
-
-/* LOGIN */
 
 function login(){
 
 jugador=document.getElementById("nombre").value
 
-if(jugador==""){
-alert("Ingresa un nombre")
-return
-}
+if(jugador=="")return
 
 document.getElementById("login").style.display="none"
 document.getElementById("game").style.display="block"
 
-cargarInventario()
+document.getElementById("player").innerText="Jugador: "+jugador
 
 }
 
-
-/* CARGAR CSV */
 
 async function cargarCSV(ruta){
 
-let res=await fetch(ruta)
-let text=await res.text()
+let response=await fetch(ruta)
+let data=await response.text()
 
-let filas=text.split("\n")
+let lineas=data.split("\n")
 
-let datos=[]
+for(let i=1;i<lineas.length;i++){
 
-for(let i=1;i<filas.length;i++){
+let col=lineas[i].split(",")
 
-let col=filas[i].split(",")
+let rareza=col[0]?.trim()
+let nombre=col[1]?.trim()
+let desc=col[2]?.trim()
 
-if(col.length>=3){
+if(!rareza)return
 
-datos.push({
-rareza:col[0].trim().toLowerCase(),
-objeto:col[1].trim(),
-descripcion:col[2].trim()
-})
+let obj={
+nombre:nombre,
+desc:desc
+}
+
+items[rareza].push(obj)
 
 }
 
 }
 
-return datos
+
+async function cargarDatos(){
+
+await cargarCSV("list/common.csv")
+await cargarCSV("list/valentine.csv")
+
+console.log(items)
 
 }
 
-
-async function iniciar(){
-
-listaComun=await cargarCSV("list/common.csv")
-listaValentine=await cargarCSV("list/valentine.csv")
-
-}
-
-iniciar()
+cargarDatos()
 
 
-/* ABRIR COFRES */
 
-function abrirComun(){
+function abrirCofre(tipo){
 
-document.body.style.background="#d4edff"
+if(tipo=="common") document.body.style.background="#2f4f4f"
+if(tipo=="valentine") document.body.style.background="#5a1a2f"
 
-tirar(listaComun,"comun")
+let r=Math.random()*100
 
-}
-
-
-function abrirValentine(){
-
-document.body.style.background="#ffd6e7"
-
-tirar(listaValentine,"valentine")
-
-}
-
-
-/* SISTEMA GACHA */
-
-function tirar(lista,tipo){
-
-let rand=Math.random()*100
 let rareza="comun"
 
-if(rand<2) rareza="epico"
-else if(rand<20) rareza="raro"
+if(r<2) rareza="epico"
+else if(r<20) rareza="raro"
 
-let posibles=lista.filter(i=>i.rareza==rareza)
 
-let premio=posibles[Math.floor(Math.random()*posibles.length)]
+let lista=items[rareza]
 
-mostrarResultado(premio,rareza,tipo)
+if(lista.length==0){
 
-agregarInventario(premio.objeto)
+document.getElementById("resultado").innerText="No hay objetos cargados"
 
-guardarInventario()
+return
+
+}
+
+let premio=lista[Math.floor(Math.random()*lista.length)]
+
+mostrarResultado(rareza,premio)
 
 }
 
 
-/* MOSTRAR RESULTADO */
+function mostrarResultado(rareza,obj){
 
-function mostrarResultado(item,rareza,tipo){
+let icon="img/candy.png"
 
-let div=document.getElementById("resultado")
+if(rareza=="raro") icon="img/hat.png"
+if(rareza=="epico") icon="img/explosion.png"
 
-let img=document.createElement("img")
+document.getElementById("resultado").innerHTML=
 
-if(tipo=="comun"){
-
-if(rareza=="comun") img.src="img/candy.png"
-if(rareza=="raro") img.src="img/hat.png"
-if(rareza=="epico") img.src="img/explosion.png"
-
-}
-
-if(tipo=="valentine"){
-
-if(rareza=="comun") img.src="img/hand.png"
-if(rareza=="raro") img.src="img/star.png"
-if(rareza=="epico") img.src="img/heart.png"
-
-}
-
-div.prepend(img)
-
-crearParticulas(rareza)
-
-sonido(tipo,rareza)
-
-}
-
-
-/* SONIDOS */
-
-function sonido(tipo,rareza){
-
-if(tipo=="comun"){
-
-if(rareza=="epico")
-document.getElementById("epic").play()
-else
-document.getElementById("open").play()
-
-}
-
-if(tipo=="valentine"){
-
-if(rareza=="epico")
-document.getElementById("kiss").play()
-else
-document.getElementById("paper").play()
-
-}
-
-}
-
-
-/* PARTICULAS SEGUN RAREZA */
-
-function crearParticulas(rareza){
-
-let simbolo="✨"
-let cantidad=8
-
-if(rareza=="raro"){
-simbolo="⭐"
-cantidad=12
-}
-
-if(rareza=="epico"){
-simbolo="💥"
-cantidad=20
-}
-
-for(let i=0;i<cantidad;i++){
-
-let p=document.createElement("div")
-p.className="particula"
-p.innerHTML=simbolo
-
-p.style.left=(window.innerWidth/2 + Math.random()*200 -100)+"px"
-p.style.top="260px"
-
-document.body.appendChild(p)
-
-setTimeout(()=>p.remove(),1000)
-
-}
-
-}
-
-
-/* INVENTARIO */
-
-function agregarInventario(obj){
-
-if(!inventario[obj])
-inventario[obj]=0
-
-inventario[obj]++
-
-actualizarTabla()
-
-}
-
-
-function actualizarTabla(){
-
-let tabla=document.getElementById("inventarioTabla")
-
-tabla.innerHTML="<tr><th>Objeto</th><th>Cantidad</th></tr>"
-
-for(let o in inventario){
-
-let fila=document.createElement("tr")
-
-fila.innerHTML="<td>"+o+"</td><td>"+inventario[o]+"</td>"
-
-tabla.appendChild(fila)
-
-}
-
-}
-
-
-/* GUARDADO */
-
-function guardarInventario(){
-
-localStorage.setItem("inv_"+jugador,JSON.stringify(inventario))
-
-}
-
-
-function cargarInventario(){
-
-let data=localStorage.getItem("inv_"+jugador)
-
-if(data){
-inventario=JSON.parse(data)
-actualizarTabla()
-}
+"<img src='"+icon+"' width=80><br>"+
+"<b>"+obj.nombre+"</b><br>"+
+obj.desc
 
 }
 
