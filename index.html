@@ -148,6 +148,23 @@ animation:subir 1s ease-out forwards
 
 </div>
 
+<!-- PANEL DM -->
+<div id="dmPanel">
+
+<h2>Panel del Dungeon Master</h2>
+
+<table id="dmTabla">
+
+<tr>
+<th>Jugador</th>
+<th>Objeto</th>
+<th>Cantidad</th>
+</tr>
+
+</table>
+
+</div>
+
 <audio id="open" src="sound/open.mp3"></audio>
 <audio id="epic" src="sound/epic.mp3"></audio>
 <audio id="paper" src="sound/paper.mp3"></audio>
@@ -169,7 +186,106 @@ Lio:"img/Lio.png",
 PERGO:"img/PERGO.png",
 Haz:"img/Haz.png"
 }
+function login(){
 
+let nombre=document.getElementById("nombre").value
+if(nombre=="")return
+
+jugador=nombre
+
+document.getElementById("fotoJugador").src=jugadoresImg[jugador]
+document.getElementById("player").innerText=jugador
+
+document.getElementById("perfil").style.display="block"
+document.getElementById("login").style.display="none"
+
+if(jugador=="Haz"){
+
+document.getElementById("dmPanel").style.display="block"
+cargarInventariosDM()
+
+}else{
+
+document.getElementById("game").style.display="block"
+cargarInventario()
+
+}
+}
+function cargarInventariosDM(){
+
+let tabla=document.getElementById("dmTabla")
+
+let jugadores=["Mal","Lio","PERGO"]
+
+jugadores.forEach(j=>{
+
+let data=localStorage.getItem("inventario_"+j)
+
+if(!data)return
+
+let inv=JSON.parse(data)
+
+for(let item in inv){
+
+let fila=document.createElement("tr")
+
+fila.innerHTML=`
+<td>${j}</td>
+<td>${item}</td>
+<td>${inv[item]}</td>
+`
+
+tabla.appendChild(fila)
+
+}
+
+})
+
+}
+actualizarTabla()
+
+}
+
+function actualizarTabla(){
+
+let tabla=document.getElementById("inventarioTabla")
+
+tabla.innerHTML="<tr><th>Objeto</th><th>Cantidad</th></tr>"
+
+for(let item in inventario){
+
+let fila=document.createElement("tr")
+
+fila.innerHTML="<td>"+item+"</td><td>"+inventario[item]+"</td>"
+
+tabla.appendChild(fila)
+
+}
+
+}
+
+function guardarInventario(){
+localStorage.setItem("inventario_"+jugador,JSON.stringify(inventario))
+}
+
+function cargarInventario(){
+
+let data=localStorage.getItem("inventario_"+jugador)
+
+if(data){
+inventario=JSON.parse(data)
+actualizarTabla()
+}
+
+}
+
+function agregarInventario(nombre){
+
+if(!inventario[nombre]){
+inventario[nombre]=0
+}
+
+inventario[nombre]++
 const cofres={
 normal:{
 imagen:"img/chest.png",
