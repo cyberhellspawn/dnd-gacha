@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
-<title>Gaoth Gacha</title>
+<title>Official Gaoth Gacha</title>
 
 <style>
 
 body{
 font-family:Arial;
 text-align:center;
-background:#ffe6f0;
+background:#1e1e2f;
+transition:0.5s;
 }
 
 /* LOGIN */
@@ -18,49 +20,46 @@ background:#ffe6f0;
 margin-top:40px;
 }
 
+/* JUEGO */
+
 #game{
 display:none;
+margin-top:30px;
 }
 
-/* COFRE */
+/* COFRES */
 
-#cofre{
-width:200px;
+.cofre{
+width:180px;
 cursor:pointer;
-transition:transform 0.4s;
+transition:0.3s;
+}
+
+.cofre:hover{
+transform:scale(1.1);
 }
 
 .abriendo{
-transform:scale(1.2) rotate(5deg);
+transform:scale(1.2) rotate(6deg);
 }
 
-/* CATALOGO */
+/* RESULTADO */
 
-.catalogo{
-margin-top:30px;
-display:flex;
-justify-content:center;
-gap:40px;
-}
-
-.item{
-text-align:center;
-}
-
-.item img{
-width:80px;
+#resultado img{
+width:70px;
+margin:5px;
 }
 
 /* INVENTARIO */
 
 table{
 margin:auto;
-margin-top:30px;
+margin-top:20px;
 border-collapse:collapse;
 }
 
 td,th{
-border:1px solid #999;
+border:1px solid #aaa;
 padding:8px 14px;
 }
 
@@ -68,13 +67,23 @@ padding:8px 14px;
 
 .particula{
 position:absolute;
-font-size:24px;
+font-size:26px;
 animation:subir 1s ease-out forwards;
+pointer-events:none;
 }
 
 @keyframes subir{
-0%{opacity:1; transform:translateY(0)}
-100%{opacity:0; transform:translateY(-100px)}
+
+0%{
+opacity:1;
+transform:translateY(0) scale(1);
+}
+
+100%{
+opacity:0;
+transform:translateY(-120px) scale(1.5);
+}
+
 }
 
 </style>
@@ -82,14 +91,11 @@ animation:subir 1s ease-out forwards;
 
 <body>
 
-<h1>Gaoth Gacha</h1>
+<h1>Official Gaoth Gacha</h1>
 
 <h3>Probabilidades</h3>
 
-<p>…pico 2% &nbsp;&nbsp;&nbsp; Raro 18% &nbsp;&nbsp;&nbsp; Com˙n 80%</p>
-
-
-<!-- LOGIN -->
+<p>Epico 2% | Raro 18% | Comun 80%</p>
 
 <div id="login">
 
@@ -98,44 +104,22 @@ animation:subir 1s ease-out forwards;
 
 </div>
 
-
-<!-- JUEGO -->
-
 <div id="game">
 
-<h3 id="player"></h3>
+<h2>Selecciona Cofre</h2>
 
-<br>
-
-<button onclick="cambiarCofre('normal')">Cofre Normal</button>
-<button onclick="cambiarCofre('valentine')">Cofre Valentine</button>
-
-<br><br>
-
-<img id="cofre" src="img/chest.png">
-
-<br><br>
-
-<button onclick="tirar(1)">Abrir x1</button>
-<button onclick="tirar(10)">Abrir x10</button>
+<img src="img/chest.png" class="cofre" onclick="abrirComun()">
+<img src="img/heartbox.png" class="cofre" onclick="abrirValentine()">
 
 <h2>Resultado</h2>
 
 <div id="resultado"></div>
 
-<hr>
-
-<h2>Cat·logo</h2>
-
-<div id="catalogo"></div>
-
-<hr>
-
 <h2>Inventario</h2>
 
 <table id="inventarioTabla">
 <tr>
-<th>Item</th>
+<th>Objeto</th>
 <th>Cantidad</th>
 </tr>
 </table>
@@ -152,51 +136,24 @@ animation:subir 1s ease-out forwards;
 
 <script>
 
-<script>
-
 let jugador=""
-let tipoCofre="normal"
 
 let inventario={}
 
-let items={
-normal:[],
-valentine:[]
-}
+let listaComun=[]
+let listaValentine=[]
 
-const cofres={
 
-normal:{
-imagen:"img/chest.png",
-comun:"img/candy.png",
-raro:"img/hat.png",
-epico:"img/explosion.png",
-sonido:"open",
-sonidoEpico:"epic",
-fondo:"#f5e6c8"
-},
-
-valentine:{
-imagen:"img/heartbox.png",
-comun:"img/hand.png",
-raro:"img/star.png",
-epico:"img/heart.png",
-sonido:"paper",
-sonidoEpico:"kiss",
-fondo:"#ffe6f0"
-}
-
-}
+/* LOGIN */
 
 function login(){
 
-let nombre=document.getElementById("nombre").value
+jugador=document.getElementById("nombre").value
 
-if(nombre=="") return
-
-jugador=nombre
-
-document.getElementById("player").innerText="Jugador: "+jugador
+if(jugador==""){
+alert("Ingresa un nombre")
+return
+}
 
 document.getElementById("login").style.display="none"
 document.getElementById("game").style.display="block"
@@ -205,146 +162,175 @@ cargarInventario()
 
 }
 
-function cambiarCofre(tipo){
 
-tipoCofre=tipo
+/* CARGAR CSV */
 
-document.getElementById("cofre").src=cofres[tipo].imagen
-
-document.body.style.background=cofres[tipo].fondo
-
-generarCatalogo()
-
-}
-
-/* ===========================
-CARGAR CSV
-=========================== */
-
-async function cargarCSV(){
-
-items.normal = await leerCSV("list/common.csv")
-items.valentine = await leerCSV("list/valentine.csv")
-
-generarCatalogo()
-
-}
-
-async function leerCSV(ruta){
+async function cargarCSV(ruta){
 
 let res=await fetch(ruta)
-let texto=await res.text()
+let text=await res.text()
 
-let lineas=texto.split("\n")
+let filas=text.split("\n")
 
-let resultado=[]
+let datos=[]
 
-for(let i=1;i<lineas.length;i++){
+for(let i=1;i<filas.length;i++){
 
-let partes=lineas[i].split(",")
+let col=filas[i].split(",")
 
-if(partes.length<3) continue
+if(col.length>=3){
 
-resultado.push({
-
-rareza:partes[0].trim(),
-nombre:partes[1].trim(),
-descripcion:partes[2].trim()
-
+datos.push({
+rareza:col[0].trim().toLowerCase(),
+objeto:col[1].trim(),
+descripcion:col[2].trim()
 })
 
 }
 
-return resultado
+}
+
+return datos
 
 }
 
-/* ===========================
-TIRADAS
-=========================== */
 
-function tirar(num){
+async function iniciar(){
 
-document.getElementById("resultado").innerHTML=""
+listaComun=await cargarCSV("list/common.csv")
+listaValentine=await cargarCSV("list/valentine.csv")
 
-for(let i=0;i<num;i++){
+}
 
-let r=Math.random()*100
+iniciar()
+
+
+/* ABRIR COFRES */
+
+function abrirComun(){
+
+document.body.style.background="#d4edff"
+
+tirar(listaComun,"comun")
+
+}
+
+
+function abrirValentine(){
+
+document.body.style.background="#ffd6e7"
+
+tirar(listaValentine,"valentine")
+
+}
+
+
+/* SISTEMA GACHA */
+
+function tirar(lista,tipo){
+
+let rand=Math.random()*100
 let rareza="comun"
 
-if(r>80) rareza="raro"
-if(r>98) rareza="epico"
+if(rand<2) rareza="epico"
+else if(rand<20) rareza="raro"
 
-let lista=items[tipoCofre].filter(i=>i.rareza==rareza)
+let posibles=lista.filter(i=>i.rareza==rareza)
 
-let premio=lista[Math.floor(Math.random()*lista.length)]
+let premio=posibles[Math.floor(Math.random()*posibles.length)]
 
-mostrarResultado(premio)
+mostrarResultado(premio,rareza,tipo)
 
-agregarInventario(premio)
-
-}
+agregarInventario(premio.objeto)
 
 guardarInventario()
 
 }
 
-function mostrarResultado(item){
+
+/* MOSTRAR RESULTADO */
+
+function mostrarResultado(item,rareza,tipo){
+
+let div=document.getElementById("resultado")
 
 let img=document.createElement("img")
 
-img.src=cofres[tipoCofre][item.rareza]
+if(tipo=="comun"){
 
-img.title=item.nombre+" - "+item.descripcion
-
-document.getElementById("resultado").appendChild(img)
-
-crearParticulas(item.rareza)
-
-if(item.rareza=="epico"){
-document.getElementById(cofres[tipoCofre].sonidoEpico).play()
-}else{
-document.getElementById(cofres[tipoCre].sonido).play()
-}
-
-animarCofre()
+if(rareza=="comun") img.src="img/candy.png"
+if(rareza=="raro") img.src="img/hat.png"
+if(rareza=="epico") img.src="img/explosion.png"
 
 }
 
-function animarCofre(){
+if(tipo=="valentine"){
 
-let cofre=document.getElementById("cofre")
-
-cofre.classList.add("abriendo")
-
-setTimeout(()=>{
-cofre.classList.remove("abriendo")
-},400)
+if(rareza=="comun") img.src="img/hand.png"
+if(rareza=="raro") img.src="img/star.png"
+if(rareza=="epico") img.src="img/heart.png"
 
 }
 
-/* ===========================
-PARTICULAS
-=========================== */
+div.prepend(img)
+
+crearParticulas(rareza)
+
+sonido(tipo,rareza)
+
+}
+
+
+/* SONIDOS */
+
+function sonido(tipo,rareza){
+
+if(tipo=="comun"){
+
+if(rareza=="epico")
+document.getElementById("epic").play()
+else
+document.getElementById("open").play()
+
+}
+
+if(tipo=="valentine"){
+
+if(rareza=="epico")
+document.getElementById("kiss").play()
+else
+document.getElementById("paper").play()
+
+}
+
+}
+
+
+/* PARTICULAS SEGUN RAREZA */
 
 function crearParticulas(rareza){
 
-let simbolo="?"
+let simbolo="‚ú®"
+let cantidad=8
 
-if(rareza=="raro") simbolo="?"
-if(rareza=="epico") simbolo="??"
+if(rareza=="raro"){
+simbolo="‚≠ê"
+cantidad=12
+}
 
-for(let i=0;i<10;i++){
+if(rareza=="epico"){
+simbolo="üí•"
+cantidad=20
+}
+
+for(let i=0;i<cantidad;i++){
 
 let p=document.createElement("div")
-
 p.className="particula"
-
 p.innerHTML=simbolo
 
-p.style.left=(window.innerWidth/2+Math.random()*100-50)+"px"
-
-p.style.top="200px"
+p.style.left=(window.innerWidth/2 + Math.random()*200 -100)+"px"
+p.style.top="260px"
 
 document.body.appendChild(p)
 
@@ -354,69 +340,32 @@ setTimeout(()=>p.remove(),1000)
 
 }
 
-/* ===========================
-CATALOGO
-=========================== */
 
-function generarCatalogo(){
+/* INVENTARIO */
 
-let lista=items[tipoCofre]
+function agregarInventario(obj){
 
-let html=`<img src="${cofres[tipoCofre].imagen}" width="120"><div class="catalogo">`
+if(!inventario[obj])
+inventario[obj]=0
 
-for(let item of lista){
-
-html+=`
-
-<div class="item">
-
-<img src="${cofres[tipoCofre][item.rareza]}">
-
-<p>${item.nombre}</p>
-
-<p>${item.rareza}</p>
-
-</div>
-
-`
-
-}
-
-html+="</div>"
-
-document.getElementById("catalogo").innerHTML=html
-
-}
-
-/* ===========================
-INVENTARIO
-=========================== */
-
-function agregarInventario(item){
-
-let nombre=item.nombre
-
-if(!inventario[nombre]){
-inventario[nombre]=0
-}
-
-inventario[nombre]++
+inventario[obj]++
 
 actualizarTabla()
 
 }
 
+
 function actualizarTabla(){
 
 let tabla=document.getElementById("inventarioTabla")
 
-tabla.innerHTML="<tr><th>Item</th><th>Cantidad</th></tr>"
+tabla.innerHTML="<tr><th>Objeto</th><th>Cantidad</th></tr>"
 
-for(let item in inventario){
+for(let o in inventario){
 
 let fila=document.createElement("tr")
 
-fila.innerHTML="<td>"+item+"</td><td>"+inventario[item]+"</td>"
+fila.innerHTML="<td>"+o+"</td><td>"+inventario[o]+"</td>"
 
 tabla.appendChild(fila)
 
@@ -424,29 +373,27 @@ tabla.appendChild(fila)
 
 }
 
+
+/* GUARDADO */
+
 function guardarInventario(){
 
-localStorage.setItem("inventario_"+jugador,JSON.stringify(inventario))
+localStorage.setItem("inv_"+jugador,JSON.stringify(inventario))
 
 }
+
 
 function cargarInventario(){
 
-let data=localStorage.getItem("inventario_"+jugador)
+let data=localStorage.getItem("inv_"+jugador)
 
 if(data){
-
 inventario=JSON.parse(data)
-
 actualizarTabla()
-
 }
 
 }
 
-cargarCSV()
-
-</script>
 </script>
 
 </body>
