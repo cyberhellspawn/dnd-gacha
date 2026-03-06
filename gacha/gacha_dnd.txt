@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gacha DND</title>
+
+<style>
+body{
+font-family: Arial;
+text-align:center;
+background:#1e1e2f;
+color:white;
+}
+
+button{
+padding:15px 25px;
+font-size:18px;
+margin:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+#resultado{
+margin-top:30px;
+font-size:24px;
+}
+
+.comun{color:#cccccc}
+.raro{color:#4da6ff}
+.epico{color:#c77dff}
+</style>
+
+</head>
+
+<body>
+
+<h1>🎲 Cofre Mágico</h1>
+
+<button onclick="tirar()">Abrir Cofre</button>
+
+<div id="resultado"></div>
+
+<script>
+
+const epicos=[
+"Espada del Dragón",
+"Armadura Celestial",
+"Anillo del Archimago"
+];
+
+const raros=[
+"Arco Élfico",
+"Botas de Velocidad",
+"Capa de Sombras",
+"Amuleto de Protección"
+];
+
+const comunes=[
+"Poción de Curación",
+"Daga de Aventurero",
+"Escudo de Madera",
+"Antorcha",
+"Cuerda",
+"Ración de Viaje"
+];
+
+function randomItem(lista){
+return lista[Math.floor(Math.random()*lista.length)];
+}
+
+function tirar(){
+
+let r=Math.floor(Math.random()*100)+1;
+
+let texto="";
+let clase="";
+
+if(r<=2){
+texto=randomItem(epicos);
+clase="epico";
+}
+else if(r<=20){
+texto=randomItem(raros);
+clase="raro";
+}
+else{
+texto=randomItem(comunes);
+clase="comun";
+}
+
+document.getElementById("resultado").innerHTML=
+`<p class="${clase}">${texto}</p>
+<p>(roll ${r})</p>`;
+
+}
+
+</script>
+
+</body>
+</html>

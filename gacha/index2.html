@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DND Gacha</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#1b1b2f;
+color:white;
+text-align:center;
+transition:background 0.5s;
+}
+
+.valentin{
+background:#3b0f1a;
+}
+
+button{
+padding:10px 20px;
+margin:5px;
+cursor:pointer;
+}
+
+.item{
+display:inline-block;
+margin:10px;
+position:relative;
+}
+
+.item img{
+width:80px;
+}
+
+.tooltip{
+display:none;
+position:absolute;
+background:black;
+padding:6px;
+border-radius:6px;
+top:90px;
+width:160px;
+}
+
+.item:hover .tooltip{
+display:block;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>DND Gacha</h1>
+
+<h3>Probabilidades</h3>
+
+<p>Épico 2%</p>
+<p>Raro 18%</p>
+<p>Común 80%</p>
+
+<div id="login">
+
+<input id="nombre" placeholder="nombre jugador">
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div id="game" style="display:none">
+
+<h2 id="jugador"></h2>
+
+<h3>Selecciona cofre</h3>
+
+<button onclick="cambiarBanner('normal')">Cofre Normal</button>
+<button onclick="cambiarBanner('valentin')">Cofre Valentín</button>
+
+<br><br>
+
+<img id="cofreImg" src="img/chest.png" width="140" onclick="tirar()">
+
+<br>
+
+<button onclick="tirar10()">Tirada x10</button>
+
+<h2>Resultado</h2>
+
+<div id="resultados"></div>
+
+<h2>Inventario</h2>
+
+<div id="inventario"></div>
+
+</div>
+
+<h2>Catálogo</h2>
+
+<div id="catalogo"></div>
+
+<audio id="openSound"></audio>
+<audio id="epicSound"></audio>
+
+<script>
+
+let player=""
+let pity=0
+let banner="normal"
+
+const banners={
+
+normal:{
+cofre:"img/chest.png",
+openSound:"sound/open.mp3",
+epicSound:"sound/epic.mp3",
+
+items:{
+
+epico:[
+{name:"Sombrero Archimago",img:"img/hat.png",desc:"+10 magia"}
+],
+
+raro:[
+{name:"Dulce mágico",img:"img/candy.png",desc:"cura 20 hp"}
+],
+
+comun:[
+{name:"Moneda antigua",img:"img/candy.png",desc:"sin valor"}
+]
+
+}
+
+},
+
+valentin:{
+
+cofre:"img/heartbox.png",
+openSound:"sound/paper.mp3",
+epicSound:"sound/kiss.mp3",
+
+items:{
+
+epico:[
+{name:"Corazón del amor",img:"img/heart.png",desc:"reliquia romántica"}
+],
+
+raro:[
+{name:"Estrella del amor",img:"img/star.png",desc:"brilla por alguien especial"}
+],
+
+comun:[
+{name:"Pluma romántica",img:"img/feather.png",desc:"para escribir cartas"}
+]
+
+}
+
+}
+
+}
+
+function login(){
+
+player=document.getElementById("nombre").value
+
+if(player=="")return
+
+document.getElementById("login").style.display="none"
+document.getElementById("game").style.display="block"
+
+document.getElementById("jugador").innerText="Jugador: "+player
+
+actualizarInventario()
+
+}
+
+function cambiarBanner(tipo){
+
+banner=tipo
+
+document.getElementById("cofreImg").src=banners[banner].cofre
+
+document.body.className=banner=="valentin"?"valentin":""
+
+mostrarCatalogo()
+
+}
+
+function random(lista){
+
+return lista[Math.floor(Math.random()*lista.length)]
+
+}
+
+function tirar(){
+
+document.getElementById("resultados").innerHTML=""
+
+roll()
+
+}
+
+function tirar10(){
+
+document.getElementById("resultados").innerHTML=""
+
+for(let i=0;i<10;i++){
+
+setTimeout(()=>roll(),i*400)
+
+}
+
+}
+
+function roll(){
+
+document.getElementById("openSound").src=banners[banner].openSound
+document.getElementById("openSound").play()
+
+pity++
+
+let r=Math.random()*100
+
+let rareza
+
+if(pity>=30){
+
+rareza="epico"
+pity=0
+
+}
+
+else if(r<2){
+
+rareza="epico"
+
+}
+
+else if(r<20){
+
+rareza="raro"
+
+}
+
+else{
+
+rareza="comun"
+
+}
+
+let item=random(banners[banner].items[rareza])
+
+mostrar(item,rareza)
+
+}
+
+function mostrar(item,rareza){
+
+let cont=document.getElementById("resultados")
+
+let div=document.createElement("div")
+
+div.className="item"
+
+div.innerHTML=
+
+`<img src="${item.img}">
+<div class="tooltip">${item.name}<br>${item.desc}</div>`
+
+cont.appendChild(div)
+
+guardarItem(item.name)
+
+if(rareza=="epico"){
+
+document.getElementById("epicSound").src=banners[banner].epicSound
+document.getElementById("epicSound").play()
+
+}
+
+}
+
+function guardarItem(nombre){
+
+let inv=JSON.parse(localStorage.getItem(player)||"[]")
+
+inv.push(nombre)
+
+localStorage.setItem(player,JSON.stringify(inv))
+
+actualizarInventario()
+
+}
+
+function actualizarInventario(){
+
+let inv=JSON.parse(localStorage.getItem(player)||"[]")
+
+let div=document.getElementById("inventario")
+
+div.innerHTML=""
+
+inv.forEach(i=>{
+
+let p=document.createElement("p")
+
+p.innerText=i
+
+div.appendChild(p)
+
+})
+
+}
+
+function mostrarCatalogo(){
+
+let c=document.getElementById("catalogo")
+
+c.innerHTML=""
+
+let lista=banners[banner].items
+
+for(let r in lista){
+
+lista[r].forEach(i=>{
+
+let div=document.createElement("div")
+
+div.className="item"
+
+div.innerHTML=
+
+`<img src="${i.img}">
+<div class="tooltip">${i.name}<br>${i.desc}</div>`
+
+c.appendChild(div)
+
+})
+
+}
+
+}
+
+mostrarCatalogo()
+
+</script>
+
+</body>
+</html>
