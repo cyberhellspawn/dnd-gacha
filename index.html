@@ -1,3 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Official Gaoth Gacha</title>
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+background:#336b8a;
+}
+
+#login{margin-top:40px}
+
+#perfil img{
+width:120px;
+border-radius:50%;
+border:3px solid white;
+}
+
+#game{display:none}
+
+#dmPanel{display:none}
+
+#cofre{
+width:200px;
+cursor:pointer;
+transition:transform 0.4s
+}
+
+.abriendo{
+transform:scale(1.2) rotate(5deg)
+}
+
+table{
+margin:auto;
+margin-top:20px;
+border-collapse:collapse;
+width:85%;
+background:white
+}
+
+td,th{
+border:1px solid #999;
+padding:8px 14px
+}
+
+.particula{
+position:absolute;
+font-size:24px;
+animation:subir 1s ease-out forwards
+}
+
+@keyframes subir{
+0%{opacity:1;transform:translateY(0)}
+100%{opacity:0;transform:translateY(-100px)}
+}
+
+.playerCard{
+display:inline-block;
+margin:20px;
+padding:10px;
+background:white;
+border-radius:10px;
+width:200px;
+}
+
+.playerCard img{
+width:80px;
+border-radius:50%;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Gaoth Gacha</h1>
+
+<h3>Probabilidades</h3>
+<p>Epico 2% | Raro 18% | Comun 80%</p>
+
+<div id="login">
+
+<select id="nombre">
+<option value="">Selecciona jugador</option>
+<option value="Mal">Mal</option>
+<option value="Lio">Lio</option>
+<option value="PERGO">PERGO</option>
+<option value="Haz">DM Haz</option>
+</select>
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div id="perfil" style="display:none">
+<img id="fotoJugador">
+<h3 id="player"></h3>
+</div>
+
+<div id="game">
+
+<button onclick="cambiarCofre('normal')">Cofre Normal</button>
+<button onclick="cambiarCofre('valentine')">Cofre Valentine</button>
+
+<br><br>
+
+<img id="cofre" src="img/chest.png">
+
+<br><br>
+
+<button onclick="tirar(1)">Abrir x1</button>
+<button onclick="tirar(10)">Abrir x10</button>
+
+<h2>Resultado</h2>
+
+<table id="resultadoTabla">
+<tr>
+<th>Rareza</th>
+<th>Objeto</th>
+<th>Descripcion</th>
+</tr>
+</table>
+
+<hr>
+
+<h2>Inventario</h2>
+
+<table id="inventarioTabla">
+<tr>
+<th>Objeto</th>
+<th>Cantidad</th>
+</tr>
+</table>
+
+</div>
+
+<!-- PANEL DM -->
+
+<div id="dmPanel">
+
+<h2>Panel Dungeon Master</h2>
+
+<div id="statsJugadores"></div>
+
+<h2>🏆 Ranking de Suerte</h2>
+
+<table id="rankingTabla">
+<tr>
+<th>Jugador</th>
+<th>% Épicos</th>
+</tr>
+</table>
+
+<h2>📜 Historial de Tiradas</h2>
+
+<table id="historialTabla">
+<tr>
+<th>Jugador</th>
+<th>Rareza</th>
+<th>Objeto</th>
+<th>Fecha</th>
+</tr>
+</table>
+
+</div>
+
+<audio id="open" src="sound/open.mp3"></audio>
+<audio id="epic" src="sound/epic.mp3"></audio>
+<audio id="paper" src="sound/paper.mp3"></audio>
+<audio id="kiss" src="sound/kiss.mp3"></audio>
+
 <script>
 
 let jugador=""
@@ -5,14 +180,7 @@ let pity=0
 let tipoCofre="normal"
 
 let objetos={normal:[],valentine:[]}
-
 let inventario={}
-
-let stats={
-tiradas:0,
-epicos:0,
-historial:[]
-}
 
 const jugadoresImg={
 Mal:"img/Mal.png",
@@ -31,7 +199,6 @@ sonido:"open",
 sonidoEpico:"epic",
 fondo:"#f5e6c8"
 },
-
 valentine:{
 imagen:"img/heartbox.png",
 comun:"img/hand.png",
@@ -46,7 +213,7 @@ fondo:"#ffe6f0"
 function login(){
 
 let nombre=document.getElementById("nombre").value
-if(nombre=="") return
+if(nombre=="")return
 
 jugador=nombre
 
@@ -59,32 +226,36 @@ document.getElementById("login").style.display="none"
 if(jugador=="Haz"){
 
 document.getElementById("dmPanel").style.display="block"
-cargarInventariosDM()
+cargarPanelDM()
 
 }else{
 
 document.getElementById("game").style.display="block"
 cargarInventario()
-cargarStats()
 
 }
 
 }
 
-function cambiarCofre(tipo){
+function registrarHistorial(rareza,objeto){
 
-tipoCofre=tipo
+let data=localStorage.getItem("historial_"+jugador)
+let historial=data?JSON.parse(data):[]
 
-document.getElementById("cofre").src=cofres[tipo].imagen
+historial.push({
+rareza:rareza,
+objeto:objeto,
+fecha:new Date().toLocaleString()
+})
 
-document.body.style.background=cofres[tipo].fondo
+localStorage.setItem("historial_"+jugador,JSON.stringify(historial))
 
 }
 
 function tirar(num){
 
 if(objetos[tipoCofre].length==0){
-alert("Los objetos aún no cargan")
+alert("Objetos no cargados")
 return
 }
 
@@ -98,8 +269,6 @@ tabla.innerHTML=`<tr>
 
 for(let i=0;i<num;i++){
 
-stats.tiradas++
-
 let rareza=rollRareza()
 
 let lista=objetos[tipoCofre].filter(o=>o.rareza==rareza)
@@ -110,19 +279,11 @@ mostrarResultado(rareza,obj,tabla)
 
 agregarInventario(obj.nombre)
 
-if(rareza=="epico") stats.epicos++
-
-stats.historial.push({
-jugador:jugador,
-rareza:rareza,
-objeto:obj.nombre,
-fecha:new Date().toLocaleString()
-})
+registrarHistorial(rareza,obj.nombre)
 
 }
 
 guardarInventario()
-guardarStats()
 
 }
 
@@ -168,6 +329,15 @@ animarCofre()
 
 }
 
+function cambiarCofre(tipo){
+
+tipoCofre=tipo
+
+document.getElementById("cofre").src=cofres[tipo].imagen
+document.body.style.background=cofres[tipo].fondo
+
+}
+
 function animarCofre(){
 
 let cofre=document.getElementById("cofre")
@@ -183,8 +353,8 @@ cofre.classList.remove("abriendo")
 function crearParticulas(rareza){
 
 let simbolo="✨"
-if(rareza=="raro") simbolo="⭐"
-if(rareza=="epico") simbolo="💥"
+if(rareza=="raro")simbolo="⭐"
+if(rareza=="epico")simbolo="💥"
 
 for(let i=0;i<8;i++){
 
@@ -205,9 +375,7 @@ setTimeout(()=>p.remove(),1000)
 
 function agregarInventario(nombre){
 
-if(!inventario[nombre]){
-inventario[nombre]=0
-}
+if(!inventario[nombre]) inventario[nombre]=0
 
 inventario[nombre]++
 
@@ -234,9 +402,7 @@ tabla.appendChild(fila)
 }
 
 function guardarInventario(){
-
 localStorage.setItem("inventario_"+jugador,JSON.stringify(inventario))
-
 }
 
 function cargarInventario(){
@@ -250,19 +416,66 @@ actualizarTabla()
 
 }
 
-function guardarStats(){
+async function cargarPanelDM(){
 
-localStorage.setItem("stats_"+jugador,JSON.stringify(stats))
+let jugadores=["Mal","Lio","PERGO"]
 
-}
+let statsDiv=document.getElementById("statsJugadores")
+statsDiv.innerHTML=""
 
-function cargarStats(){
+let ranking=[]
 
-let data=localStorage.getItem("stats_"+jugador)
+jugadores.forEach(j=>{
 
-if(data){
-stats=JSON.parse(data)
-}
+let historial=JSON.parse(localStorage.getItem("historial_"+j)||"[]")
+
+let total=historial.length
+let epicos=historial.filter(h=>h.rareza=="epico").length
+
+let porcentaje= total? ((epicos/total)*100).toFixed(1):0
+
+ranking.push({jugador:j,p:porcentaje})
+
+statsDiv.innerHTML+=`
+<div class="playerCard">
+<img src="${jugadoresImg[j]}">
+<h3>${j}</h3>
+<p>📊 Tiradas: ${total}</p>
+<p>⭐ Epicos: ${epicos}</p>
+</div>
+`
+
+let tabla=document.getElementById("historialTabla")
+
+historial.forEach(h=>{
+
+tabla.innerHTML+=`
+<tr>
+<td>${j}</td>
+<td>${h.rareza}</td>
+<td>${h.objeto}</td>
+<td>${h.fecha}</td>
+</tr>
+`
+
+})
+
+})
+
+ranking.sort((a,b)=>b.p-a.p)
+
+let tablaRank=document.getElementById("rankingTabla")
+
+ranking.forEach(r=>{
+
+tablaRank.innerHTML+=`
+<tr>
+<td>${r.jugador}</td>
+<td>${r.p}%</td>
+</tr>
+`
+
+})
 
 }
 
@@ -292,56 +505,9 @@ descripcion:p[2]
 
 }
 
-function cargarInventariosDM(){
-
-let jugadores=["Mal","Lio","PERGO"]
-
-let tabla=document.getElementById("dmTabla")
-
-tabla.innerHTML=`
-<tr>
-<th>Foto</th>
-<th>Jugador</th>
-<th>Tiradas</th>
-<th>Epicos</th>
-<th>Suerte</th>
-</tr>
-`
-
-let ranking=[]
-
-jugadores.forEach(j=>{
-
-let data=localStorage.getItem("stats_"+j)
-
-if(!data) return
-
-let s=JSON.parse(data)
-
-let suerte=(s.epicos/s.tiradas*100)||0
-
-ranking.push({nombre:j,suerte:suerte})
-
-let fila=document.createElement("tr")
-
-fila.innerHTML=`
-<td><img src="${jugadoresImg[j]}" width="60"></td>
-<td>${j}</td>
-<td>${s.tiradas}</td>
-<td>${s.epicos}</td>
-<td>${suerte.toFixed(2)}%</td>
-`
-
-tabla.appendChild(fila)
-
-})
-
-ranking.sort((a,b)=>b.suerte-a.suerte)
-
-}
-
 cargarCSV()
 
-document.getElementById("dmPanel").style.display="none"
-
 </script>
+
+</body>
+</html>
